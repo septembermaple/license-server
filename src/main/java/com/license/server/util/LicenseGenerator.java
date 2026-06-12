@@ -28,6 +28,11 @@ public class LicenseGenerator {
     private String signingKey;
 
     /**
+     * 固定签名密钥（当未配置时使用，确保生成和验证使用相同密钥）
+     */
+    private static final String DEFAULT_SIGNING_KEY = "LicenseServer_Default_Signing_Key_2024";
+
+    /**
      * 激活码分组长度
      */
     private static final int GROUP_LENGTH = 5;
@@ -160,11 +165,11 @@ public class LicenseGenerator {
      * 获取签名密钥字节数组
      */
     private byte[] getSigningKeyBytes() {
-        if (signingKey == null || signingKey.isEmpty()) {
-            // 如果未配置密钥，生成一个随机密钥（仅用于当前会话）
-            return generateRandomKey().getBytes(StandardCharsets.UTF_8);
+        if (signingKey != null && !signingKey.isEmpty()) {
+            return signingKey.getBytes(StandardCharsets.UTF_8);
         }
-        return signingKey.getBytes(StandardCharsets.UTF_8);
+        // 使用固定默认密钥，确保生成和验证使用相同密钥
+        return DEFAULT_SIGNING_KEY.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
