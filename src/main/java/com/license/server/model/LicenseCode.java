@@ -66,7 +66,7 @@ public class LicenseCode {
     /**
      * 激活码状态：0-未使用 1-已激活 2-已过期 3-已封禁
      */
-    @Column(name = "status", nullable = false)
+    @Column(name = "`status`", nullable = false)
     private Integer status = 0;
 
     /**

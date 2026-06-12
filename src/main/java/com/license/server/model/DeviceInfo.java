@@ -84,7 +84,7 @@ public class DeviceInfo {
     /**
      * 设备状态：0-正常 1-已禁用 2-已拉黑
      */
-    @Column(name = "status", nullable = false)
+    @Column(name = "`status`", nullable = false)
     private Integer status = 0;
 
     /**
