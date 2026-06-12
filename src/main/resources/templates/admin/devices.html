@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Server - 设备管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 20px;
+        }
+        .navbar .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .navbar .nav-links a.active {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .page-header h2 {
+            font-size: 24px;
+            color: #333;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        td {
+            font-size: 14px;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-normal { background: #e8f5e9; color: #388e3c; }
+        .status-blacklisted { background: #ffebee; color: #d32f2f; }
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        .actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .actions button:hover {
+            opacity: 0.8;
+        }
+        .btn-blacklist { background: #ffebee; color: #d32f2f; }
+        .btn-unblacklist { background: #e8f5e9; color: #388e3c; }
+        .code-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .machine-code {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #667eea;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>License Server 管理后台</h1>
+        <div class="nav-links">
+            <a href="/admin">仪表盘</a>
+            <a href="/admin/licenses">激活码管理</a>
+            <a href="/admin/devices" class="active">设备管理</a>
+            <a href="/admin/logout">退出登录</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h2>设备列表</h2>
+        </div>
+
+        <div class="table-container">
+            <table th:if="${not #lists.isEmpty(devices)}">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>机器码</th>
+                        <th>激活码</th>
+                        <th>设备名称</th>
+                        <th>操作系统</th>
+                        <th>MAC地址</th>
+                        <th>IP地址</th>
+                        <th>状态</th>
+                        <th>激活时间</th>
+                        <th>最后验证</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="device : ${devices}">
+                        <td th:text="${device.id}">1</td>
+                        <td>
+                            <span class="machine-code" th:text="${#strings.substring(device.machineCode, 0, 16)} + '...'">abc123...</span>
+                        </td>
+                        <td class="code-cell" th:text="${device.licenseCode}">XXXX-XXXX-XXXX-XXXX-XXXX</td>
+                        <td th:text="${device.deviceName} ?: '未知设备'">Device-01</td>
+                        <td th:text="${device.osInfo} ?: '-'">Windows 10</td>
+                        <td th:text="${device.macAddress} ?: '-'">00:11:22:33:44:55</td>
+                        <td th:text="${device.ipAddress} ?: '-'">192.168.1.1</td>
+                        <td>
+                            <span class="status-badge" 
+                                  th:classappend="${device.blacklisted} ? 'status-blacklisted' : 'status-normal'"
+                                  th:text="${device.blacklisted} ? '已拉黑' : '正常'">
+                                正常
+                            </span>
+                        </td>
+                        <td th:text="${#temporals.format(device.activatedAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
+                        <td th:text="${device.lastVerifiedAt != null} ? ${#temporals.format(device.lastVerifiedAt, 'yyyy-MM-dd HH:mm')} : '从未验证'">2024-01-01</td>
+                        <td>
+                            <div class="actions">
+                                <button th:if="${!device.blacklisted}" 
+                                        class="btn-blacklist"
+                                        th:onclick="'blacklistDevice(' + ${device.id} + ')'">
+                                    拉黑
+                                </button>
+                                <button th:if="${device.blacklisted}" 
+                                        class="btn-unblacklist"
+                                        th:onclick="'unblacklistDevice(' + ${device.id} + ')'">
+                                    解除
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div th:if="${#lists.isEmpty(devices)}" class="empty-state">
+                <h3>暂无设备</h3>
+                <p>当客户端激活软件后，设备将显示在此处</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function blacklistDevice(id) {
+            if (confirm('确定要拉黑此设备吗？该设备将无法再激活任何软件。')) {
+                fetch('/admin/api/devices/' + id + '/blacklist', {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.ok) {
+                        alert('拉黑成功');
+                        location.reload();
+                    } else {
+                        alert('拉黑失败');
+                    }
+                });
+            }
+        }
+
+        function unblacklistDevice(id) {
+            if (confirm('确定要解除此设备的拉黑状态吗？')) {
+                fetch('/admin/api/devices/' + id + '/unblacklist', {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.ok) {
+                        alert('解除拉黑成功');
+                        location.reload();
+                    } else {
+                        alert('解除拉黑失败');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

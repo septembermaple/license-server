@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Server - 生成激活码</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 20px;
+        }
+        .navbar .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        .navbar .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .navbar .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .navbar .nav-links a.active {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .form-card {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .form-card h2 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .result-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .result-card.show {
+            display: block;
+        }
+        .result-card h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-item .label {
+            color: #666;
+            font-size: 14px;
+        }
+        .result-item .value {
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .license-code {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #667eea;
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 2px dashed #667eea;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .copy-btn:hover {
+            background: #5a6fd6;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .success-message {
+            color: #27ae60;
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <h1>License Server 管理后台</h1>
+        <div class="nav-links">
+            <a href="/admin">仪表盘</a>
+            <a href="/admin/licenses">激活码管理</a>
+            <a href="/admin/devices">设备管理</a>
+            <a href="/admin/logout">退出登录</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="form-card">
+            <h2>生成激活码</h2>
+            <form id="generateForm">
+                <div class="form-group">
+                    <label for="softwareId">软件ID</label>
+                    <input type="number" id="softwareId" name="softwareId" value="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="expireAt">过期时间</label>
+                    <input type="datetime-local" id="expireAt" name="expireAt" required>
+                </div>
+                <div class="form-group">
+                    <label for="planType">套餐类型</label>
+                    <select id="planType" name="planType" required>
+                        <option value="basic">Basic - 基础版</option>
+                        <option value="pro" selected>Pro - 专业版</option>
+                        <option value="enterprise">Enterprise - 企业版</option>
+                        <option value="trial">Trial - 试用版</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxDevices">最大设备数</label>
+                    <input type="number" id="maxDevices" name="maxDevices" value="1" min="1" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="remark">备注</label>
+                    <textarea id="remark" name="remark" placeholder="可选：输入备注信息"></textarea>
+                </div>
+                <button type="submit" class="btn">生成激活码</button>
+            </form>
+
+            <div id="resultCard" class="result-card">
+                <h3>生成成功</h3>
+                <div class="license-code" id="licenseCode"></div>
+                <button class="copy-btn" onclick="copyCode()">复制激活码</button>
+                <div class="result-item">
+                    <span class="label">软件ID</span>
+                    <span class="value" id="resultSoftwareId"></span>
+                </div>
+                <div class="result-item">
+                    <span class="label">套餐类型</span>
+                    <span class="value" id="resultPlanType"></span>
+                </div>
+                <div class="result-item">
+                    <span class="label">过期时间</span>
+                    <span class="value" id="resultExpireAt"></span>
+                </div>
+                <div class="result-item">
+                    <span class="label">最大设备数</span>
+                    <span class="value" id="resultMaxDevices"></span>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+        </div>
+        <a href="/admin/licenses" class="back-link">返回激活码列表</a>
+    </div>
+
+    <script>
+        // 设置默认过期时间为一年后
+        const nextYear = new Date();
+        nextYear.setFullYear(nextYear.getFullYear() + 1);
+        document.getElementById('expireAt').value = nextYear.toISOString().slice(0, 16);
+
+        document.getElementById('generateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const params = new URLSearchParams(formData);
+            
+            fetch('/admin/api/licenses/generate', {
+                method: 'POST',
+                body: params
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || '生成失败');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('licenseCode').textContent = data.code;
+                document.getElementById('resultSoftwareId').textContent = data.softwareId;
+                document.getElementById('resultPlanType').textContent = data.planType;
+                document.getElementById('resultExpireAt').textContent = data.expireAt;
+                document.getElementById('resultMaxDevices').textContent = data.maxDevices;
+                document.getElementById('resultCard').classList.add('show');
+                document.getElementById('successMessage').textContent = '激活码生成成功！';
+                document.getElementById('errorMessage').textContent = '';
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').textContent = error.message;
+                document.getElementById('successMessage').textContent = '';
+                document.getElementById('resultCard').classList.remove('show');
+            });
+        });
+
+        function copyCode() {
+            const code = document.getElementById('licenseCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('激活码已复制到剪贴板');
+            }).catch(() => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('激活码已复制到剪贴板');
+            });
+        }
+    </script>
+</body>
+</html>
